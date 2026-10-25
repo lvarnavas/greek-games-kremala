@@ -1,0 +1,20 @@
+# Αυτόματα PRs για ενημερώσεις εξαρτήσεων, μία φορά την εβδομάδα.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Μικρές/διορθωτικές ενημερώσεις σε ένα PR· οι major ξεχωριστά για έλεγχο.
+      minor-and-patch:
+        update-types: [minor, patch]

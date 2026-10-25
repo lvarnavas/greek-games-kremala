@@ -154,6 +154,11 @@ client/   React + Vite + Tailwind + vite-plugin-pwa
 - **Δυσκολία λέξεων**: υπολογίζεται αυτόματα (`shared/src/difficulty.ts`) από τη συχνότητα των μοναδικών γραμμάτων και το μήκος. Τα όρια χωρίζουν το λεξικό περίπου σε τρίτα.
 - **Ήχοι**: παράγονται με Web Audio, χωρίς αρχεία, άρα λειτουργούν και offline.
 
+## Συνεχής ενσωμάτωση
+
+- **CI** ([.github/workflows/ci.yml](.github/workflows/ci.yml)): σε κάθε push στο `main` και σε κάθε pull request τρέχουν `npm ci`, έλεγχος τύπων, build και όλα τα tests (Node 22).
+- **Dependabot** ([.github/dependabot.yml](.github/dependabot.yml)): εβδομαδιαία PRs για ενημερώσεις των GitHub Actions και των npm πακέτων. Οι μικρές ενημερώσεις ομαδοποιούνται σε ένα PR, ενώ οι major έρχονται ξεχωριστά. Κάθε PR περνά από το CI πριν το συγχωνεύσεις.
+
 ## Προσθήκη λέξεων
 
 Επεξεργάσου το `shared/data/words.source.json` και τρέξε `npm run dict:build`. Τα tests ελέγχουν ότι:
