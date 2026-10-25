@@ -1,0 +1,24 @@
+{
+  "name": "kremala",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Κρεμάλα — ελληνικό παιχνίδι λέξεων (PWA) με Κλασική, Μονομαχία, Συνεργατική λειτουργία, bots και online δωμάτια",
+  "type": "module",
+  "workspaces": ["shared", "server", "client"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm:dev -w server\" \"npm:dev -w client\"",
+    "build": "npm run build -w client && npm run build -w server",
+    "start": "npm run start -w server",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p shared && tsc -p server && tsc -p client",
+    "dict:build": "node scripts/build-dictionary.mjs",
+    "icons": "node scripts/generate-icons.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "9.1.0",
+    "typescript": "5.7.2",
+    "vitest": "2.1.8"
+  }
+}

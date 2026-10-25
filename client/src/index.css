@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  -webkit-tap-highlight-color: transparent;
+}
+:root.dark {
+  color-scheme: dark;
+}
+html,
+body {
+  min-height: 100%;
+  overscroll-behavior-y: none;
+}
+body {
+  @apply bg-paper font-sans text-ink antialiased dark:bg-paper-dark dark:text-slate-100;
+}
+button {
+  touch-action: manipulation;
+}
+.hangman-draw {
+  stroke-dasharray: 300;
+  animation: draw 0.5s ease-out forwards;
+}
+@keyframes draw {
+  from { stroke-dashoffset: 300; }
+  to { stroke-dashoffset: 0; }
+}
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
