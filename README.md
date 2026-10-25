@@ -1,5 +1,7 @@
 # Κρεμάλα 🎯
 
+[![CI](https://github.com/lvarnavas/greek-games-kremala/actions/workflows/ci.yml/badge.svg)](https://github.com/lvarnavas/greek-games-kremala/actions/workflows/ci.yml)
+
 
 Ελληνικό παιχνίδι λέξεων για κινητά, tablets και υπολογιστές, εγκαταστάσιμο ως PWA.
 
@@ -26,7 +28,7 @@ npm run dev        # server στο :3001 + client (Vite) στο :5173
 | Script | Τι κάνει |
 | --- | --- |
 | `npm run dev` | Server (tsx watch) και client (Vite) μαζί |
-| `npm test` | Όλα τα unit και integration tests (Vitest) |
+| `npm test` | Όλα τα unit και integration tests (Vitest). Τρέχουν και αυτόματα στο GitHub Actions σε κάθε push/PR |
 | `npm run typecheck` | Έλεγχος τύπων TypeScript σε shared, server, client |
 | `npm run build` | Build του client (με PWA/service worker) και bundle του server |
 | `npm start` | Παραγωγή: ο server σερβίρει το API και το `client/dist` |
