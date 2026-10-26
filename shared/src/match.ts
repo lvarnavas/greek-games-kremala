@@ -178,7 +178,13 @@ function emptyParticipation(): Participation {
   return { proposed: 0, correct: 0, incorrect: 0, hints: 0 };
 }
 
+/** Υπάρχει τουλάχιστον ένας παίκτης που δεν έχει αποχωρήσει. */
+export function hasParticipants(game: Game): boolean {
+  return game.players.some((p) => p.connectionStatus !== 'left');
+}
+
 export function startRound(game: Game, words: Record<string, WordEntry>, now: number, rng: Rng): Round {
+  if (Object.keys(words).length === 0) throw new Error('Δεν υπάρχουν παίκτες για νέο γύρο');
   const s = game.settings;
   const participants = game.players.filter((p) => p.connectionStatus !== 'left').map((p) => p.id);
   const durationMs = s.timerEnabled ? s.roundDuration * 1000 : null;
@@ -232,7 +238,7 @@ export function startGame(game: Game, now: number, rng: Rng, dict: Dictionary = 
 }
 
 export function nextRound(game: Game, now: number, rng: Rng, dict: Dictionary = DICTIONARY): Round | null {
-  if (game.status !== 'roundOver') return null;
+  if (game.status !== 'roundOver' || !hasParticipants(game)) return null;
   return startRound(game, selectRoundWords(game, rng, dict), now, rng);
 }
 

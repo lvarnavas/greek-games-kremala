@@ -253,10 +253,29 @@ export class RoomManager {
   tick(now: number): Set<Room> {
     const changed = new Set<Room>();
     for (const room of [...this.rooms.values()]) {
+      try {
+        this.tickRoom(room, now, changed);
+      } catch (err) {
+        // Ένα σφάλμα σε ένα δωμάτιο δεν πρέπει να ρίξει ολόκληρο τον server.
+        console.error(`[room ${room.code}] σφάλμα στο tick:`, err);
+        changed.delete(room);
+      }
+    }
+    return changed;
+  }
+
+  private tickRoom(room: Room, now: number, changed: Set<Room>): void {
+    {
       const g = room.game;
+      // Όλοι οι άνθρωποι αποχώρησαν: το δωμάτιο δεν έχει πια λόγο ύπαρξης.
+      if (!g.players.some((p) => !p.isBot && p.connectionStatus !== 'left')) {
+        this.rooms.delete(room.code);
+        return;
+      }
       if (stepGame(g, now, this.rng, this.dict).changed) changed.add(room);
       this.afterChange(room, now);
-      if (g.status === 'roundOver' && room.autoNextAt !== null && now >= room.autoNextAt) {
+      const humanConnected = g.players.some((p) => !p.isBot && p.connectionStatus === 'connected');
+      if (g.status === 'roundOver' && humanConnected && room.autoNextAt !== null && now >= room.autoNextAt) {
         nextRound(g, now, this.rng, this.dict);
         room.autoNextAt = null;
         changed.add(room);
@@ -287,7 +306,6 @@ export class RoomManager {
         changed.delete(room);
       }
     }
-    return changed;
   }
 
   /** Η προβολή που στέλνεται σε συγκεκριμένο παίκτη. */

@@ -142,4 +142,53 @@ describe('RoomManager', () => {
     expect(m.hint(room, ids[0], 'cheat', 2)).toEqual({ ok: false, error: 'invalid_request' });
     expect(m.guess(room, 'ghost', 'Α', 3).ok).toBe(false);
   });
+  it('όλοι αποχωρούν στη μέση του γύρου: χωρίς σφάλμα, το δωμάτιο διαγράφεται', () => {
+    const { m, room, ids } = setup('duel');
+    m.start(room, ids[0], 0);
+    m.leave(room, ids[0], 100);
+    m.leave(room, ids[1], 200);
+    expect(() => {
+      m.tick(300);
+      m.tick(10_000);
+    }).not.toThrow();
+    expect(m.get(room.code)).toBeUndefined();
+  });
+  it('μόνο bots απέμειναν: το δωμάτιο διαγράφεται', () => {
+    const { m, room, ids } = setup('duel', 1);
+    m.addBot(room, ids[0], 'easy', 0);
+    m.start(room, ids[0], 0);
+    m.leave(room, ids[0], 100);
+    expect(() => m.tick(200)).not.toThrow();
+    expect(m.get(room.code)).toBeUndefined();
+  });
+  it('χωρίς συνδεδεμένους ανθρώπους δεν ξεκινά αυτόματα νέος γύρος', () => {
+    const { m, room, ids } = setup('duel');
+    m.updateSettings(room, ids[0], { roundDuration: 30 }, 0);
+    m.start(room, ids[0], 0);
+    m.disconnect(room, ids[0], 10);
+    m.disconnect(room, ids[1], 10);
+    m.tick(30_000);
+    expect(room.game.status).toBe('roundOver');
+    m.tick(60_000);
+    expect(room.game.status).toBe('roundOver');
+    m.join(room.code, 'x', room.tokens.get(ids[0]), 61_000);
+    m.tick(61_100);
+    expect(room.game.status).toBe('playing');
+  });
+  it('σφάλμα σε ένα δωμάτιο δεν επηρεάζει τα υπόλοιπα', () => {
+    const { m, room, ids } = setup('duel');
+    const other = m.create('Γιώργος', { gameMode: 'duel' }, 0);
+    if (!other.ok) throw 0;
+    m.start(room, ids[0], 0);
+    // Προσομοίωση αλλοιωμένης κατάστασης.
+    (room.game as unknown as { currentRound: unknown }).currentRound = { status: 'playing', boards: null };
+    const errSpy = console.error;
+    console.error = () => {};
+    try {
+      expect(() => m.tick(100)).not.toThrow();
+    } finally {
+      console.error = errSpy;
+    }
+    expect(m.get(other.room.code)).toBeDefined();
+  });
 });

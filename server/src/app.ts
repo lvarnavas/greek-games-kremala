@@ -60,6 +60,18 @@ export function createKremalaServer(options: KremalaServerOptions = {}) {
       socket.join(room.code);
     };
     const safeAck = (ack: unknown) => (typeof ack === 'function' ? (ack as (r: unknown) => void) : () => {});
+    // Κάθε χειριστής τυλίγεται ώστε ένα απρόβλεπτο σφάλμα να απαντά με
+    // «invalid_request» αντί να τερματίσει τη διεργασία.
+    const on = ((event: string, handler: (...args: unknown[]) => void) =>
+      socket.on(event as never, ((...args: unknown[]) => {
+        try {
+          handler(...args);
+        } catch (err) {
+          console.error(`[socket ${event}] σφάλμα:`, err);
+          const ack = args.at(-1);
+          if (typeof ack === 'function') ack({ ok: false, error: 'invalid_request' });
+        }
+      }) as never)) as unknown as typeof socket.on;
 
     const withRoom = <T>(ack: unknown, fn: (room: Room, playerId: string, now: number) => T) => {
       const room = current();
@@ -70,9 +82,9 @@ export function createKremalaServer(options: KremalaServerOptions = {}) {
       broadcast(room);
     };
 
-    socket.on('time:sync', (ack) => safeAck(ack)(clock()));
+    on('time:sync', (ack) => safeAck(ack)(clock()));
 
-    socket.on('room:create', (p, ack) => {
+    on('room:create', (p, ack) => {
       const reply = safeAck(ack);
       const res = manager.create(p?.name, p?.settings, clock());
       if (!res.ok) return reply(res);
@@ -81,7 +93,7 @@ export function createKremalaServer(options: KremalaServerOptions = {}) {
       broadcast(res.room);
     });
 
-    socket.on('room:join', (p, ack) => {
+    on('room:join', (p, ack) => {
       const reply = safeAck(ack);
       const res = manager.join(p?.code, p?.name, p?.token, clock());
       if (!res.ok) return reply(res);
@@ -90,7 +102,7 @@ export function createKremalaServer(options: KremalaServerOptions = {}) {
       broadcast(res.room);
     });
 
-    socket.on('room:leave', (ack) => {
+    on('room:leave', (ack) => {
       const room = current();
       if (room && socket.data.playerId) {
         manager.leave(room, socket.data.playerId, clock());
@@ -101,9 +113,9 @@ export function createKremalaServer(options: KremalaServerOptions = {}) {
       safeAck(ack)({ ok: true });
     });
 
-    socket.on('room:settings', (p, ack) => withRoom(ack, (r, id, now) => manager.updateSettings(r, id, p?.settings, now)));
-    socket.on('room:addBot', (p, ack) => withRoom(ack, (r, id, now) => manager.addBot(r, id, p?.level, now)));
-    socket.on('room:removePlayer', (p, ack) =>
+    on('room:settings', (p, ack) => withRoom(ack, (r, id, now) => manager.updateSettings(r, id, p?.settings, now)));
+    on('room:addBot', (p, ack) => withRoom(ack, (r, id, now) => manager.addBot(r, id, p?.level, now)));
+    on('room:removePlayer', (p, ack) =>
       withRoom(ack, (r, id, now) => {
         const res = manager.kick(r, id, p?.playerId, now);
         if (res.ok) {
@@ -117,13 +129,13 @@ export function createKremalaServer(options: KremalaServerOptions = {}) {
         return res.ok ? { ok: true } : res;
       }),
     );
-    socket.on('room:start', (ack) => withRoom(ack, (r, id, now) => manager.start(r, id, now)));
-    socket.on('room:next', (ack) => withRoom(ack, (r, id, now) => manager.next(r, id, now)));
-    socket.on('room:lobby', (ack) => withRoom(ack, (r, id, now) => manager.backToLobby(r, id, now)));
-    socket.on('game:guess', (p, ack) => withRoom(ack, (r, id, now) => manager.guess(r, id, p?.letter, now)));
-    socket.on('game:hint', (p, ack) => withRoom(ack, (r, id, now) => manager.hint(r, id, p?.hint, now)));
+    on('room:start', (ack) => withRoom(ack, (r, id, now) => manager.start(r, id, now)));
+    on('room:next', (ack) => withRoom(ack, (r, id, now) => manager.next(r, id, now)));
+    on('room:lobby', (ack) => withRoom(ack, (r, id, now) => manager.backToLobby(r, id, now)));
+    on('game:guess', (p, ack) => withRoom(ack, (r, id, now) => manager.guess(r, id, p?.letter, now)));
+    on('game:hint', (p, ack) => withRoom(ack, (r, id, now) => manager.hint(r, id, p?.hint, now)));
 
-    socket.on('disconnect', () => {
+    on('disconnect', () => {
       const room = current();
       const pid = socket.data.playerId;
       if (!room || !pid) return;
@@ -140,7 +152,11 @@ export function createKremalaServer(options: KremalaServerOptions = {}) {
   let timer: NodeJS.Timeout | null = null;
   const startTicking = () => {
     timer ??= setInterval(() => {
-      for (const room of manager.tick(clock())) broadcast(room);
+      try {
+        for (const room of manager.tick(clock())) broadcast(room);
+      } catch (err) {
+        console.error('[tick] σφάλμα:', err);
+      }
     }, tickMs);
   };
 

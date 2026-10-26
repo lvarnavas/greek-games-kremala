@@ -54,6 +54,15 @@ describe('Κλασική λειτουργία', () => {
     expect(g.players[0].score).toBe(0);
     expect(g.status).toBe('playing');
   });
+  it('δεν ξεκινά νέος γύρος όταν δεν έχει απομείνει κανείς', () => {
+    const g = makeGame('duel', ['a', 'b']);
+    startWith(g, 'ήλιος');
+    removePlayer(g, 'a', 1500);
+    removePlayer(g, 'b', 1600);
+    stepGame(g, 1700, seededRng(1), tinyDict);
+    expect(g.status).toBe('roundOver');
+    expect(nextRound(g, 2000, seededRng(1), tinyDict)).toBeNull();
+  });
   it('στόχος πόντων τερματίζει το παιχνίδι', () => {
     const g = makeGame('classic', ['p'], { targetScore: 100, totalRounds: 10 });
     startWith(g, 'ήλιος');
