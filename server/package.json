@@ -10,14 +10,14 @@
   },
   "dependencies": {
     "express": "4.21.2",
-    "socket.io": "4.8.1"
+    "socket.io": "4.8.4"
   },
   "devDependencies": {
     "@kremala/shared": "1.0.0",
     "@types/express": "5.0.0",
     "@types/node": "22.10.2",
-    "esbuild": "0.24.0",
-    "socket.io-client": "4.8.1",
-    "tsx": "4.19.2"
+    "esbuild": "0.28.2",
+    "socket.io-client": "4.8.4",
+    "tsx": "4.23.15"
   }
 }
